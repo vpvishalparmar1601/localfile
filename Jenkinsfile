@@ -71,8 +71,8 @@ pipeline {
             steps {
                 script {
                     echo 'Stopping and removing any previous containers...'
-                    sh 'docker ps -q --filter "name=${DOCKER_IMAGE}" | xargs -r docker stop'
-                    sh 'docker ps -a -q --filter "name=${DOCKER_IMAGE}" | xargs -r docker rm'
+                    sh 'docker ps -q --filter "name=${DOCKER_IMAGE}" | xargs -r docker stop || true'
+                    sh 'docker ps -a -q --filter "name=${DOCKER_IMAGE}" | xargs -r docker rm || true'
 
                     echo 'Running Docker container...'
                     sh 'docker run -d -p ${APP_PORT}:${APP_PORT} --name ${DOCKER_IMAGE} ${DOCKER_IMAGE}:${DOCKER_TAG}'
@@ -124,11 +124,8 @@ pipeline {
 
     post {
         always {
-            echo 'Ensuring all containers and images are cleaned up...'
-            sh '''
-            docker ps -a -q --filter "name=${DOCKER_IMAGE}" | xargs -r docker rm -f || true
-            docker images -q ${DOCKER_IMAGE}:${DOCKER_TAG} | xargs -r docker rmi -f || true
-            '''
+            echo 'Cleaning up Docker containers...'
+            // No auto-deletion of containers or images
         }
         success {
             echo 'Pipeline completed successfully!'
