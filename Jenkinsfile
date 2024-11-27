@@ -33,6 +33,7 @@ pipeline {
                     sh 'docker ps -a -q --filter "name=${DOCKER_IMAGE}" | xargs -r docker rm'
 
                     echo 'Running Docker container...'
+                    // Running the Docker container with port mapping and Flask binding to 0.0.0.0
                     sh 'docker run -d -p ${APP_PORT}:${APP_PORT} --name ${DOCKER_IMAGE} ${DOCKER_IMAGE}:${DOCKER_TAG}'
 
                     // Capture logs from the running container
@@ -46,7 +47,7 @@ pipeline {
             steps {
                 script {
                     echo 'Waiting for Flask app to be ready...'
-                    // Wait for the Flask app to be accessible before testing
+                    // Wait until the Flask app responds with 200 OK
                     waitUntil {
                         script {
                             def response = sh(script: "curl -s -o /dev/null -w '%{http_code}' ${APP_URL}", returnStdout: true).trim()
@@ -65,6 +66,7 @@ pipeline {
                     def response = ""
                     def attempts = 0
                     def maxAttempts = 5
+                    // Retry logic in case the Flask app is slow to start
                     while (attempts < maxAttempts) {
                         response = sh(script: "curl -I --max-time 10 ${APP_URL} | head -n 1", returnStdout: true).trim()
                         echo "Response: ${response}"

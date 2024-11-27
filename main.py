@@ -7,5 +7,5 @@ def home():
     return 'Flask app is running!'
 
 if __name__ == '__main__':
-    # Change the host to 0.0.0.0 so it's accessible from outside the container
+    # Ensure Flask binds to all network interfaces inside the container (0.0.0.0)
     app.run(host='0.0.0.0', port=5000)
