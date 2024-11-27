@@ -14,7 +14,7 @@ pipeline {
             }
         }
 
-           stage('Build Docker Image') {
+        stage('Build Docker Image') {
             steps {
                 script {
                     // Build the Docker image
@@ -23,7 +23,7 @@ pipeline {
             }
         }
 
-  stage('Run Docker Container') {
+        stage('Run Docker Container') {
             steps {
                 script {
                     // Stop any running container from a previous build (optional)
@@ -34,6 +34,15 @@ pipeline {
 
                     // Run the Docker container
                     sh 'docker run -d -p 5000:5000 --name $DOCKER_IMAGE $DOCKER_IMAGE:$DOCKER_TAG'
+                }
+            }
+        }
+
+        stage('Test Flask App') {
+            steps {
+                script {
+                    // Test the Flask application
+                    sh 'curl -I http://localhost:5000 || echo "Flask app not responding"'
                 }
             }
         }
@@ -64,26 +73,4 @@ pipeline {
             }
         }
     }
-    pipeline {
-    agent any
-    stages {
-        stage('Build and Run Docker') {
-            steps {
-                script {
-                    sh 'docker build -t flask-app:latest .'
-                    sh 'docker run -d -p 5000:5000 flask-app:latest'
-                    sh 'docker ps'
-                }
-            }
-        }
-        stage('Test Flask App') {
-            steps {
-                script {
-                    sh 'curl -I http://localhost:5000 || echo "Flask app not responding"'
-                }
-            }
-        }
-    }
-}
-
 }
