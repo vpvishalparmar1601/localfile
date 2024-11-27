@@ -4,7 +4,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return 'hello vishal!'
+    return 'Flask app is running!'
 
 if __name__ == '__main__':
     # Change the host to 0.0.0.0 so it's accessible from outside the container
