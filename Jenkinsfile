@@ -24,7 +24,7 @@ pipeline {
                     sh '''
                     docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} . || (echo "Docker build failed" && exit 1)
                     '''
-                    
+
                     // Debugging: List Docker images after the build to ensure it's created
                     sh 'docker images'
 
@@ -46,8 +46,13 @@ pipeline {
                     // Remove the stopped container (optional)
                     sh 'docker ps -a -q --filter "name=${DOCKER_IMAGE}" | xargs -r docker rm'
 
-                    // Run the Docker container
-                    sh 'docker run -d -p 5000:5000 --name ${DOCKER_IMAGE} ${DOCKER_IMAGE}:${DOCKER_TAG} || (echo "Docker run failed" && exit 1)'
+                    // Run the Docker container in detached mode, bind port 5000 to the host
+                    sh '''
+                    docker run -d -p 5000:5000 --name ${DOCKER_IMAGE} ${DOCKER_IMAGE}:${DOCKER_TAG} || (echo "Docker run failed" && exit 1)
+                    '''
+
+                    // Check if the container is running
+                    sh 'docker ps | grep ${DOCKER_IMAGE} || (echo "Docker container is not running" && exit 1)'
                 }
             }
         }
