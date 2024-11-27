@@ -33,10 +33,8 @@ pipeline {
                     sh 'docker ps -a -q --filter "name=${DOCKER_IMAGE}" | xargs -r docker rm'
 
                     echo 'Running Docker container...'
-                    // Running the Docker container with port mapping and Flask binding to 0.0.0.0
                     sh 'docker run -d -p ${APP_PORT}:${APP_PORT} --name ${DOCKER_IMAGE} ${DOCKER_IMAGE}:${DOCKER_TAG}'
 
-                    // Capture logs from the running container
                     echo 'Getting logs from the Flask app container...'
                     sh 'docker logs ${DOCKER_IMAGE}'
                 }
@@ -47,7 +45,6 @@ pipeline {
             steps {
                 script {
                     echo 'Waiting for Flask app to be ready...'
-                    // Wait until the Flask app responds with 200 OK
                     waitUntil {
                         script {
                             def response = sh(script: "curl -s -o /dev/null -w '%{http_code}' ${APP_URL}", returnStdout: true).trim()
@@ -63,24 +60,11 @@ pipeline {
             steps {
                 script {
                     echo "Testing Flask application at ${APP_URL}..."
-                    def response = ""
-                    def attempts = 0
-                    def maxAttempts = 5
-                    // Retry logic in case the Flask app is slow to start
-                    while (attempts < maxAttempts) {
-                        response = sh(script: "curl -I --max-time 10 ${APP_URL} | head -n 1", returnStdout: true).trim()
-                        echo "Response: ${response}"
-                        if (response.contains("200 OK")) {
-                            echo "Flask app is running successfully!"
-                            break
-                        } else {
-                            echo "Flask app is not ready, retrying..."
-                            attempts++
-                            sleep(time: 10, unit: 'SECONDS')
-                        }
-                    }
-                    if (!response.contains("200 OK")) {
-                        error("Flask app test failed: ${response}")
+                    def response = sh(script: "curl -s ${APP_URL}", returnStdout: true).trim()
+                    if (response.contains('Flask app is running!')) {
+                        echo "Flask app test successful!"
+                    } else {
+                        error("Flask app test failed: Response was '${response}'")
                     }
                 }
             }
@@ -91,7 +75,7 @@ pipeline {
                 script {
                     echo 'Cleaning up Docker containers and images...'
                     sh '''
-                    docker ps -a -q --filter "ancestor=${DOCKER_IMAGE}:${DOCKER_TAG}" | xargs -r docker rm -f || true
+                    docker ps -a -q --filter "name=${DOCKER_IMAGE}" | xargs -r docker rm -f || true
                     docker images -q ${DOCKER_IMAGE}:${DOCKER_TAG} | xargs -r docker rmi -f || true
                     '''
                 }
@@ -102,7 +86,7 @@ pipeline {
     post {
         always {
             script {
-                echo 'Final cleanup to ensure no lingering Docker containers or images...'
+                echo 'Ensuring no lingering Docker containers or images...'
                 sh '''
                 docker ps -a -q --filter "name=${DOCKER_IMAGE}" | xargs -r docker rm -f || true
                 docker images -q ${DOCKER_IMAGE}:${DOCKER_TAG} | xargs -r docker rmi -f || true
@@ -113,7 +97,7 @@ pipeline {
             echo 'Pipeline completed successfully!'
         }
         failure {
-            echo 'Pipeline failed. Check the logs for errors.'
+            echo 'Pipeline failed. Check the logs for details.'
         }
     }
 }

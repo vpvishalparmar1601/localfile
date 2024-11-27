@@ -7,5 +7,5 @@ def home():
     return 'Flask app is running!'
 
 if __name__ == '__main__':
-    # Ensure Flask binds to all network interfaces inside the container (0.0.0.0)
+    # Flask binds to all interfaces (0.0.0.0) for Docker compatibility
     app.run(host='0.0.0.0', port=5000)
