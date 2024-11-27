@@ -20,9 +20,11 @@ pipeline {
                     // Debugging: List the contents of the working directory to ensure Dockerfile is present
                     sh 'ls -l'
 
-                    // Build the Docker image
-                    sh 'docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .'
-
+                    // Build the Docker image and show the build logs
+                    sh '''
+                    docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} . || (echo "Docker build failed" && exit 1)
+                    '''
+                    
                     // Debugging: List Docker images after the build to ensure it's created
                     sh 'docker images'
 
