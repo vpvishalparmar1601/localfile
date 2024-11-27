@@ -38,20 +38,18 @@ pipeline {
             }
         }
 
-        stage('Clean Up') {
-            steps {
-                script {
-                    // Optionally, remove the Docker image after use to save space
-                    sh 'docker rmi $DOCKER_IMAGE:$DOCKER_TAG'
-                }
-            }
-        }
-    }
+      stage('Clean Up') {
+    steps {
+        script {
+            // Stop and remove any running containers using the image
+            sh '''
+            docker ps -a -q --filter "ancestor=$DOCKER_IMAGE:$DOCKER_TAG" | xargs -r docker rm -f
+            '''
 
-    post {
-        always {
-            // Clean up the Docker container after build completion
-            sh 'docker ps -a -q --filter "name=$DOCKER_IMAGE" | xargs -r docker rm -f'
+            // Remove the Docker image
+            sh '''
+            docker images -q $DOCKER_IMAGE:$DOCKER_TAG | xargs -r docker rmi -f
+            '''
         }
     }
 }
