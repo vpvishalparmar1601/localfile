@@ -9,6 +9,11 @@ pipeline {
         CHECKSUM_FILE = "${WORKSPACE}/checksum.txt" // File to store checksum
     }
 
+    triggers {
+        // Trigger the pipeline when there is a change in the GitHub repository
+        githubPush()  // This will trigger on any push to the GitHub repository
+    }
+
     stages {
         stage('Checkout Code') {
             steps {
