@@ -34,6 +34,10 @@ pipeline {
 
                     echo 'Running Docker container...'
                     sh 'docker run -d -p ${APP_PORT}:${APP_PORT} --name ${DOCKER_IMAGE} ${DOCKER_IMAGE}:${DOCKER_TAG}'
+
+                    // Capture logs from the running container
+                    echo 'Getting logs from the Flask app container...'
+                    sh 'docker logs ${DOCKER_IMAGE}'
                 }
             }
         }
@@ -58,12 +62,23 @@ pipeline {
             steps {
                 script {
                     echo "Testing Flask application at ${APP_URL}..."
-                    def response = sh(script: "curl -I --max-time 10 ${APP_URL} | head -n 1", returnStdout: true).trim()
-                    echo "Response: ${response}"
+                    def response = ""
+                    def attempts = 0
+                    def maxAttempts = 5
+                    while (attempts < maxAttempts) {
+                        response = sh(script: "curl -I --max-time 10 ${APP_URL} | head -n 1", returnStdout: true).trim()
+                        echo "Response: ${response}"
+                        if (response.contains("200 OK")) {
+                            echo "Flask app is running successfully!"
+                            break
+                        } else {
+                            echo "Flask app is not ready, retrying..."
+                            attempts++
+                            sleep(time: 10, unit: 'SECONDS')
+                        }
+                    }
                     if (!response.contains("200 OK")) {
                         error("Flask app test failed: ${response}")
-                    } else {
-                        echo "Flask app is running successfully!"
                     }
                 }
             }
