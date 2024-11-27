@@ -17,15 +17,15 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Debugging: List the contents of the working directory to ensure Dockerfile is present
+                    // List the contents of the working directory to ensure Dockerfile is present
                     sh 'ls -l'
 
-                    // Build the Docker image and show the build logs
+                    // Build the Docker image
                     sh '''
                     docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} . || (echo "Docker build failed" && exit 1)
                     '''
 
-                    // Debugging: List Docker images after the build to ensure it's created
+                    // List Docker images after the build to ensure it's created
                     sh 'docker images'
 
                     // Ensure the image exists with the correct name and tag
@@ -40,11 +40,9 @@ pipeline {
                     // Check if the image exists before attempting to run the container
                     sh 'docker images | grep ${DOCKER_IMAGE}:${DOCKER_TAG} || (echo "Docker image not found" && exit 1)'
 
-                    // Stop any running container with the same name (optional)
-                    sh 'docker ps -q --filter "name=${DOCKER_IMAGE}" | xargs -r docker stop'
-
-                    // Remove the stopped container (optional)
-                    sh 'docker ps -a -q --filter "name=${DOCKER_IMAGE}" | xargs -r docker rm'
+                    // Stop and remove any running containers with the same name (optional)
+                    sh 'docker ps -q --filter "name=${DOCKER_IMAGE}" | xargs -r docker stop || true'
+                    sh 'docker ps -a -q --filter "name=${DOCKER_IMAGE}" | xargs -r docker rm || true'
 
                     // Run the Docker container in detached mode, bind port 5000 to the host
                     sh '''
@@ -62,12 +60,12 @@ pipeline {
                 script {
                     // Stop and remove any running containers using the image
                     sh '''
-                    docker ps -a -q --filter "ancestor=${DOCKER_IMAGE}:${DOCKER_TAG}" | xargs -r docker rm -f
+                    docker ps -a -q --filter "ancestor=${DOCKER_IMAGE}:${DOCKER_TAG}" | xargs -r docker rm -f || true
                     '''
 
                     // Remove the Docker image after cleaning up containers
                     sh '''
-                    docker images -q ${DOCKER_IMAGE}:${DOCKER_TAG} | xargs -r docker rmi -f
+                    docker images -q ${DOCKER_IMAGE}:${DOCKER_TAG} | xargs -r docker rmi -f || true
                     '''
                 }
             }
@@ -78,8 +76,8 @@ pipeline {
         always {
             script {
                 // Additional cleanup to ensure no lingering containers or images
-                sh 'docker ps -a -q --filter "name=${DOCKER_IMAGE}" | xargs -r docker rm -f'
-                sh 'docker images -q ${DOCKER_IMAGE}:${DOCKER_TAG} | xargs -r docker rmi -f'
+                sh 'docker ps -a -q --filter "name=${DOCKER_IMAGE}" | xargs -r docker rm -f || true'
+                sh 'docker images -q ${DOCKER_IMAGE}:${DOCKER_TAG} | xargs -r docker rmi -f || true'
             }
         }
     }

@@ -10,4 +10,4 @@ def home():
 
 # Ensure the app runs when the script is executed directly
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000)  # Make the app accessible on all interfaces
