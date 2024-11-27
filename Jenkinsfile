@@ -23,24 +23,17 @@ pipeline {
             }
         }
 
-
-        stage('Run Docker Container') {
+  stage('Run Docker Container') {
             steps {
                 script {
-                    // Check if the image exists before attempting to run the container
-                    sh 'docker images | grep ${DOCKER_IMAGE}:${DOCKER_TAG} || (echo "Docker image not found" && exit 1)'
+                    // Stop any running container from a previous build (optional)
+                    sh 'docker ps -q --filter "name=$DOCKER_IMAGE" | xargs -r docker stop'
 
-                    // Stop and remove any running containers with the same name (optional)
-                    sh 'docker ps -q --filter "name=${DOCKER_IMAGE}" | xargs -r docker stop || true'
-                    sh 'docker ps -a -q --filter "name=${DOCKER_IMAGE}" | xargs -r docker rm || true'
+                    // Remove the stopped container (optional)
+                    sh 'docker ps -a -q --filter "name=$DOCKER_IMAGE" | xargs -r docker rm'
 
-                    // Run the Docker container in detached mode, bind port 5000 to the host
-                    sh '''
-                    docker run -d -p 5000:5000 --name ${DOCKER_IMAGE} ${DOCKER_IMAGE}:${DOCKER_TAG} || (echo "Docker run failed" && exit 1)
-                    '''
-
-                    // Check if the container is running
-                    sh 'docker ps | grep ${DOCKER_IMAGE} || (echo "Docker container is not running" && exit 1)'
+                    // Run the Docker container
+                    sh 'docker run -d -p 5000:5000 --name $DOCKER_IMAGE $DOCKER_IMAGE:$DOCKER_TAG'
                 }
             }
         }
