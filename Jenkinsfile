@@ -21,27 +21,7 @@ pipeline {
             }
         }
 
-        stage('Detect Changes in main.py') {
-            steps {
-                script {
-                    // Check if the main.py file has changed
-                    def changes = sh(script: 'git diff --name-only HEAD~1 HEAD', returnStdout: true).trim()
-                    echo "Detected changes: ${changes}"
-
-                    // If main.py has changed, set a flag to trigger rebuild
-                    if (changes.contains('main.py')) {
-                        env.REBUILD = 'true'
-                    } else {
-                        env.REBUILD = 'false'
-                    }
-                }
-            }
-        }
-
         stage('Build Docker Image') {
-            when {
-                expression { return env.REBUILD == 'true' }
-            }
             steps {
                 echo 'Building Docker image...'
                 sh 'docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .'
@@ -49,9 +29,6 @@ pipeline {
         }
 
         stage('Run Docker Container') {
-            when {
-                expression { return env.REBUILD == 'true' }
-            }
             steps {
                 script {
                     echo 'Stopping and removing any previous containers...'
@@ -68,9 +45,6 @@ pipeline {
         }
 
         stage('Wait for Flask App to be Ready') {
-            when {
-                expression { return env.REBUILD == 'true' }
-            }
             steps {
                 script {
                     echo 'Waiting for Flask app to become accessible...'
@@ -87,9 +61,6 @@ pipeline {
         }
 
         stage('Test Flask App') {
-            when {
-                expression { return env.REBUILD == 'true' }
-            }
             steps {
                 script {
                     echo "Testing Flask application at ${APP_URL}..."
@@ -107,6 +78,7 @@ pipeline {
     }
 
     post {
+        
         success {
             echo 'Pipeline completed successfully!'
         }
