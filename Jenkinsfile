@@ -17,14 +17,17 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Add debugging to check if the build context is correct
-                    sh 'ls -l'  // List files in the working directory (make sure Dockerfile exists)
+                    // Debugging: List the contents of the working directory to ensure Dockerfile is present
+                    sh 'ls -l'
 
                     // Build the Docker image
-                    sh 'docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} . || (echo "Docker build failed" && exit 1)'
+                    sh 'docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .'
 
-                    // List Docker images to verify if the image was built successfully
+                    // Debugging: List Docker images after the build to ensure it's created
                     sh 'docker images'
+
+                    // Ensure the image exists with the correct name and tag
+                    sh 'docker images | grep ${DOCKER_IMAGE}:${DOCKER_TAG} || (echo "Docker image not found" && exit 1)'
                 }
             }
         }
@@ -33,10 +36,8 @@ pipeline {
             steps {
                 script {
                     // Check if the image exists before attempting to run the container
-                    sh '''
-                        docker images | grep ${DOCKER_IMAGE}:${DOCKER_TAG} || (echo "Docker image not found" && exit 1)
-                    '''
-                    
+                    sh 'docker images | grep ${DOCKER_IMAGE}:${DOCKER_TAG} || (echo "Docker image not found" && exit 1)'
+
                     // Stop any running container with the same name (optional)
                     sh 'docker ps -q --filter "name=${DOCKER_IMAGE}" | xargs -r docker stop'
 
