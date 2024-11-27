@@ -69,32 +69,11 @@ pipeline {
                 }
             }
         }
-
-        stage('Clean Up') {
-            steps {
-                script {
-                    echo 'Cleaning up Docker containers and images...'
-                    sh '''
-                    docker ps -a -q --filter "name=${DOCKER_IMAGE}" | xargs -r docker rm -f || true
-                    docker images -q ${DOCKER_IMAGE}:${DOCKER_TAG} | xargs -r docker rmi -f || true
-                    '''
-                }
-            }
-        }
     }
 
     post {
-        always {
-            script {
-                echo 'Ensuring no lingering Docker containers or images...'
-                sh '''
-                docker ps -a -q --filter "name=${DOCKER_IMAGE}" | xargs -r docker rm -f || true
-                docker images -q ${DOCKER_IMAGE}:${DOCKER_TAG} | xargs -r docker rmi -f || true
-                '''
-            }
-        }
         success {
-            echo 'Pipeline completed successfully!'
+            echo 'Pipeline completed successfully! The Flask app is running on http://localhost:5000.'
         }
         failure {
             echo 'Pipeline failed. Check the logs for details.'
