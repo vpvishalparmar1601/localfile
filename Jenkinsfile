@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = 'flask-app'  // Name of your Docker image
-        DOCKER_TAG = 'latest'       // Tag for your Docker image
+        DOCKER_IMAGE = 'flask-app' // Name of your Docker image
+        DOCKER_TAG = 'latest'      // Tag for your Docker image
     }
 
     stages {
@@ -38,18 +38,29 @@ pipeline {
             }
         }
 
-      stage('Clean Up') {
-    steps {
-        script {
-            // Stop and remove any running containers using the image
-            sh '''
-            docker ps -a -q --filter "ancestor=$DOCKER_IMAGE:$DOCKER_TAG" | xargs -r docker rm -f
-            '''
+        stage('Clean Up') {
+            steps {
+                script {
+                    // Stop and remove any running containers using the image
+                    sh '''
+                    docker ps -a -q --filter "ancestor=$DOCKER_IMAGE:$DOCKER_TAG" | xargs -r docker rm -f
+                    '''
 
-            // Remove the Docker image
-            sh '''
-            docker images -q $DOCKER_IMAGE:$DOCKER_TAG | xargs -r docker rmi -f
-            '''
+                    // Remove the Docker image
+                    sh '''
+                    docker images -q $DOCKER_IMAGE:$DOCKER_TAG | xargs -r docker rmi -f
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            script {
+                // Additional cleanup to ensure no lingering containers
+                sh 'docker ps -a -q --filter "name=$DOCKER_IMAGE" | xargs -r docker rm -f'
+            }
         }
     }
 }
