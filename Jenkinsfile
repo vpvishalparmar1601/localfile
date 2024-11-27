@@ -53,7 +53,7 @@ pipeline {
 
         stage('Build Docker Image') {
             when {
-                not { currentBuild.result == 'NOT_BUILT' }
+                expression { return currentBuild.result != 'NOT_BUILT' }
             }
             steps {
                 echo 'Building Docker image...'
@@ -63,7 +63,7 @@ pipeline {
 
         stage('Run Docker Container') {
             when {
-                not { currentBuild.result == 'NOT_BUILT' }
+                expression { return currentBuild.result != 'NOT_BUILT' }
             }
             steps {
                 script {
@@ -82,7 +82,7 @@ pipeline {
 
         stage('Wait for Flask App to be Ready') {
             when {
-                not { currentBuild.result == 'NOT_BUILT' }
+                expression { return currentBuild.result != 'NOT_BUILT' }
             }
             steps {
                 script {
@@ -101,7 +101,7 @@ pipeline {
 
         stage('Test Flask App') {
             when {
-                not { currentBuild.result == 'NOT_BUILT' }
+                expression { return currentBuild.result != 'NOT_BUILT' }
             }
             steps {
                 script {
@@ -120,6 +120,13 @@ pipeline {
     }
 
     post {
+        always {
+            echo 'Ensuring all containers and images are cleaned up...'
+            sh '''
+            docker ps -a -q --filter "name=${DOCKER_IMAGE}" | xargs -r docker rm -f || true
+            docker images -q ${DOCKER_IMAGE}:${DOCKER_TAG} | xargs -r docker rmi -f || true
+            '''
+        }
         success {
             echo 'Pipeline completed successfully!'
         }
