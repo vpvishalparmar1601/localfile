@@ -17,8 +17,8 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Build the Docker image
-                    sh 'docker build -t $DOCKER_IMAGE:$DOCKER_TAG .'
+                    // Explicitly build the Docker image with a tag
+                    sh 'docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .'
                 }
             }
         }
@@ -26,14 +26,14 @@ pipeline {
         stage('Run Docker Container') {
             steps {
                 script {
-                    // Stop any running container from a previous build (optional)
-                    sh 'docker ps -q --filter "name=$DOCKER_IMAGE" | xargs -r docker stop'
+                    // Stop any running container with the same name (optional)
+                    sh 'docker ps -q --filter "name=${DOCKER_IMAGE}" | xargs -r docker stop'
 
                     // Remove the stopped container (optional)
-                    sh 'docker ps -a -q --filter "name=$DOCKER_IMAGE" | xargs -r docker rm'
+                    sh 'docker ps -a -q --filter "name=${DOCKER_IMAGE}" | xargs -r docker rm'
 
                     // Run the Docker container
-                    sh 'docker run -d -p 5000:5000 --name $DOCKER_IMAGE $DOCKER_IMAGE:$DOCKER_TAG'
+                    sh 'docker run -d -p 5000:5000 --name ${DOCKER_IMAGE} ${DOCKER_IMAGE}:${DOCKER_TAG}'
                 }
             }
         }
@@ -43,12 +43,12 @@ pipeline {
                 script {
                     // Stop and remove any running containers using the image
                     sh '''
-                    docker ps -a -q --filter "ancestor=$DOCKER_IMAGE:$DOCKER_TAG" | xargs -r docker rm -f
+                    docker ps -a -q --filter "ancestor=${DOCKER_IMAGE}:${DOCKER_TAG}" | xargs -r docker rm -f
                     '''
 
-                    // Remove the Docker image
+                    // Remove the Docker image after cleaning up containers
                     sh '''
-                    docker images -q $DOCKER_IMAGE:$DOCKER_TAG | xargs -r docker rmi -f
+                    docker images -q ${DOCKER_IMAGE}:${DOCKER_TAG} | xargs -r docker rmi -f
                     '''
                 }
             }
@@ -58,8 +58,9 @@ pipeline {
     post {
         always {
             script {
-                // Additional cleanup to ensure no lingering containers
-                sh 'docker ps -a -q --filter "name=$DOCKER_IMAGE" | xargs -r docker rm -f'
+                // Additional cleanup to ensure no lingering containers or images
+                sh 'docker ps -a -q --filter "name=${DOCKER_IMAGE}" | xargs -r docker rm -f'
+                sh 'docker images -q ${DOCKER_IMAGE}:${DOCKER_TAG} | xargs -r docker rmi -f'
             }
         }
     }
