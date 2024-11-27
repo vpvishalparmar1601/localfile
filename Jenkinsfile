@@ -2,9 +2,9 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = 'flask-app'          // Docker image name
-        DOCKER_TAG = 'latest'               // Docker image tag
-        APP_PORT = '5000'                   // Flask app port
+        DOCKER_IMAGE = 'flask-app'            // Docker image name
+        DOCKER_TAG = 'latest'                 // Docker image tag
+        APP_PORT = '5000'                     // Flask app port
         APP_URL = "http://localhost:${APP_PORT}" // URL to test the app
         CHECKSUM_FILE = "${WORKSPACE}/checksum.txt" // File to store checksum
     }
@@ -25,16 +25,19 @@ pipeline {
         stage('Detect Changes in main.py') {
             steps {
                 script {
+                    // Compute the checksum of main.py
                     def currentChecksum = sh(
                         script: "md5sum main.py | awk '{print \$1}'",
                         returnStdout: true
                     ).trim()
 
+                    // Check if checksum file exists, if so, compare the current checksum
                     if (fileExists(CHECKSUM_FILE)) {
                         def previousChecksum = readFile(CHECKSUM_FILE).trim()
                         echo "Previous checksum: ${previousChecksum}"
                         echo "Current checksum: ${currentChecksum}"
 
+                        // Only rebuild if the file has changed
                         if (previousChecksum != currentChecksum) {
                             echo "main.py has changed. Rebuilding Docker image..."
                             writeFile(file: CHECKSUM_FILE, text: currentChecksum)
