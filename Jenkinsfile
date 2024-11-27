@@ -14,25 +14,15 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
+           stage('Build Docker Image') {
             steps {
                 script {
-                    // List the contents of the working directory to ensure Dockerfile is present
-                    sh 'ls -l'
-
                     // Build the Docker image
-                    sh '''
-                    docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} . || (echo "Docker build failed" && exit 1)
-                    '''
-
-                    // List Docker images after the build to ensure it's created
-                    sh 'docker images'
-
-                    // Ensure the image exists with the correct name and tag
-                    sh 'docker images | grep ${DOCKER_IMAGE}:${DOCKER_TAG} || (echo "Docker image not found" && exit 1)'
+                    sh 'docker build -t $DOCKER_IMAGE:$DOCKER_TAG .'
                 }
             }
         }
+
 
         stage('Run Docker Container') {
             steps {
