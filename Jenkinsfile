@@ -78,13 +78,7 @@ pipeline {
     }
 
     post {
-        always {
-            echo 'Cleaning up containers and images...'
-            sh '''
-            docker ps -a -q --filter "name=${DOCKER_IMAGE}" | xargs -r docker rm -f || true
-            docker images -q ${DOCKER_IMAGE}:${DOCKER_TAG} | xargs -r docker rmi -f || true
-            '''
-        }
+        
         success {
             echo 'Pipeline completed successfully!'
         }
