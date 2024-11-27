@@ -38,11 +38,33 @@ pipeline {
             }
         }
 
+        stage('Wait for Flask App to be Ready') {
+            steps {
+                script {
+                    echo 'Waiting for Flask app to be ready...'
+                    // Wait for the Flask app to be accessible before testing
+                    waitUntil {
+                        script {
+                            def response = sh(script: "curl -s -o /dev/null -w '%{http_code}' ${APP_URL}", returnStdout: true).trim()
+                            return response == '200'
+                        }
+                    }
+                    echo "Flask app is now accessible!"
+                }
+            }
+        }
+
         stage('Test Flask App') {
             steps {
                 script {
-                    // Test the Flask application
-                    sh 'curl -I http://localhost:5000 || echo "Flask app not responding"'
+                    echo "Testing Flask application at ${APP_URL}..."
+                    def response = sh(script: "curl -I --max-time 10 ${APP_URL} | head -n 1", returnStdout: true).trim()
+                    echo "Response: ${response}"
+                    if (!response.contains("200 OK")) {
+                        error("Flask app test failed: ${response}")
+                    } else {
+                        echo "Flask app is running successfully!"
+                    }
                 }
             }
         }
