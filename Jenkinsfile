@@ -24,11 +24,11 @@ pipeline {
         stage('Detect Changes in main.py') {
             steps {
                 script {
-                    // Check if main.py file has changed
+                    // Check if the main.py file has changed
                     def changes = sh(script: 'git diff --name-only HEAD~1 HEAD', returnStdout: true).trim()
                     echo "Detected changes: ${changes}"
 
-                    // Set a flag to trigger rebuild if main.py is changed
+                    // If main.py has changed, set a flag to trigger rebuild
                     if (changes.contains('main.py')) {
                         env.REBUILD = 'true'
                     } else {
