@@ -117,28 +117,9 @@ pipeline {
                 }
             }
         }
-
-        stage('Clean Up') {
-            steps {
-                script {
-                    echo 'Cleaning up Docker containers and images...'
-                    sh '''
-                    docker ps -a -q --filter "name=${DOCKER_IMAGE}" | xargs -r docker rm -f || true
-                    docker images -q ${DOCKER_IMAGE}:${DOCKER_TAG} | xargs -r docker rmi -f || true
-                    '''
-                }
-            }
-        }
     }
 
     post {
-        always {
-            echo 'Ensuring all containers and images are cleaned up...'
-            sh '''
-            docker ps -a -q --filter "name=${DOCKER_IMAGE}" | xargs -r docker rm -f || true
-            docker images -q ${DOCKER_IMAGE}:${DOCKER_TAG} | xargs -r docker rmi -f || true
-            '''
-        }
         success {
             echo 'Pipeline completed successfully!'
         }
