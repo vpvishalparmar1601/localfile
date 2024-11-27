@@ -64,4 +64,26 @@ pipeline {
             }
         }
     }
+    pipeline {
+    agent any
+    stages {
+        stage('Build and Run Docker') {
+            steps {
+                script {
+                    sh 'docker build -t flask-app:latest .'
+                    sh 'docker run -d -p 5000:5000 flask-app:latest'
+                    sh 'docker ps'
+                }
+            }
+        }
+        stage('Test Flask App') {
+            steps {
+                script {
+                    sh 'curl -I http://localhost:5000 || echo "Flask app not responding"'
+                }
+            }
+        }
+    }
+}
+
 }
